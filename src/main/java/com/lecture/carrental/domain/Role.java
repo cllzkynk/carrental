@@ -15,9 +15,14 @@ public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+
+
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
     private UserRole name;
+
+
     @Override
     public String toString() {
         return "" + name + '}';
