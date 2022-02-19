@@ -106,7 +106,7 @@ public class User {
 
 
     @Column(nullable = false)
-    private Boolean builtIn;
+    private Boolean builtIn=false;
 
 
     @ManyToMany(fetch = FetchType.LAZY)
