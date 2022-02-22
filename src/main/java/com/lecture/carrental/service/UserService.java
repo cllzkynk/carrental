@@ -84,6 +84,7 @@ public class UserService {
     }
 
 
-
+    public void updatePassword(Long id, String newPassword, String oldPassword) {
     }
+}
 
