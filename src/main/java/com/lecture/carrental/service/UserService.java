@@ -16,10 +16,12 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
 @AllArgsConstructor
 @Service
 public class UserService {
@@ -29,35 +31,36 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final static String USER_NOT_FOUND_MSG = "user with id %d not found";
 
-
     public List<ProjectUser> fetchAllUsers() {
         return userRepository.findAllBy();
     }
 
-
-
-
     public UserDTO findById(Long id) throws ResourceNotFoundException {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(String.format(USER_NOT_FOUND_MSG, id)));
+
         UserDTO userDTO = new UserDTO();
         userDTO.setRoles(user.getRoles());
+
         return new UserDTO(user.getFirstName(), user.getLastName(), user.getPhoneNumber(), user.getEmail(),
                 user.getAddress(), user.getZipCode(), user.getBuiltIn(), userDTO.getRoles());
     }
 
-
-
     public void register(User user) throws BadRequestException {
+
         if (userRepository.existsByEmail(user.getEmail())){
             throw new ConflictException("Error: Email is already in use!");
         }
+
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
+
         Set<Role> roles = new HashSet<>();
         Role customerRole = roleRepository.findByName(UserRole.ROLE_CUSTOMER)
                 .orElseThrow(() -> new ResourceNotFoundException("Error: Role is not found."));
+
         roles.add(customerRole);
+
         user.setRoles(roles);
         userRepository.save(user);
     }
@@ -93,7 +96,9 @@ public class UserService {
 
 
     public void updatePassword(Long id, String newPassword, String oldPassword) throws BadRequestException {
+
         Optional<User> user = userRepository.findById(id);
+
         if (user.get().getBuiltIn()) {
             throw new BadRequestException("You dont have permission to update password!");
         }
@@ -107,26 +112,29 @@ public class UserService {
         userRepository.save(user.get());
     }
 
-
-
-
-
-
     public void updateUserAuth(Long id, AdminDTO adminDTO) throws BadRequestException {
+
         boolean emailExist = userRepository.existsByEmail(adminDTO.getEmail());
+
         Optional<User> userDetails = userRepository.findById(id);
+
         if (userDetails.get().getBuiltIn()) {
             throw new BadRequestException("You dont have permission to update user info!");
         }
+
         adminDTO.setBuiltIn(false);
+
         if (emailExist && !adminDTO.getEmail().equals(userDetails.get().getEmail()))
             throw new ConflictException("Error: Email is already in use!");
+
         if (adminDTO.getPassword() == null)
             adminDTO.setPassword(userDetails.get().getPassword());
+
         else {
             String encodedPassword = passwordEncoder.encode(adminDTO.getPassword());
             adminDTO.setPassword(encodedPassword);
         }
+
         Set<String> userRoles = adminDTO.getRoles();
         Set<Role> roles = addRoles(userRoles);
 
@@ -137,7 +145,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-
     public void removeById(Long id) throws ResourceNotFoundException {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format(USER_NOT_FOUND_MSG, id)));
@@ -147,15 +154,6 @@ public class UserService {
 
         userRepository.deleteById(id);
     }
-
-
-
-
-
-
-
-
-
 
 
     public Set<Role> addRoles(Set<String> userRoles) {
@@ -181,11 +179,13 @@ public class UserService {
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(customerServiceRole);
                         break;
+
                     case "Manager":
                         Role managerRole = roleRepository.findByName(UserRole.ROLE_MANAGER)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(managerRole);
                         break;
+
                     default:
                         Role userRole = roleRepository.findByName(UserRole.ROLE_CUSTOMER)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
@@ -195,7 +195,4 @@ public class UserService {
         }
         return roles;
     }
-
-
 }
-
